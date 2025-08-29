@@ -1,0 +1,129 @@
+body {
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+}
+
+#map-container {
+    height: 100%; 
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    background-color: #e5e7eb; 
+}
+
+#status-overlay {
+    opacity: 0;
+}
+#status-overlay.show {
+    opacity: 1;
+}
+
+#sync-status-bar.syncing {
+    background-color: #3b82f6; /* Azul */
+    transform: translateY(0);
+}
+#sync-status-bar.success {
+    background-color: #16a34a; /* Verde */
+    transform: translateY(0);
+}
+#sync-status-bar.warning {
+    background-color: #f97316; /* Laranja */
+    transform: translateY(0);
+}
+
+#info-modal.show {
+    transform: translateY(0);
+}
+
+.select-placeholder {
+    text-align: center;
+    color: #6b7280;
+}
+
+#controls-container select {
+    background-color: white;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.1); opacity: 0.0; }
+    50% { opacity: 0.5; }
+    100% { transform: scale(2.5); opacity: 0.0; }
+}
+.user-location-marker .pulse {
+    position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background-color: #3b82f6; opacity: 0.7; transform: scale(1);
+    animation: pulse 2s infinite cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+.user-location-marker .dot {
+    position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background-color: #fff; border: 3px solid #3b82f6;
+    box-sizing: border-box; box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+#locate-btn.locate-btn-active {
+    background-color: #2563eb;
+    color: white;
+}
+
+#fab-container, #fab-options {
+    align-items: flex-end;
+}
+
+.fab-option {
+    background-color: white; color: #374151; padding: 0.5rem 1rem;
+    border-radius: 9999px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    font-size: 0.875rem; font-weight: 600; white-space: nowrap; opacity: 0;
+    transform: translateY(10px) scale(0.9); transition: all 0.2s ease-in-out;
+}
+
+#fab-container.open .fab-option {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#fab-container.open #main-fab-btn svg {
+    transform: rotate(45deg);
+}
+
+/* NOVO: Estilos para o Modal de Alvos */
+#alvo-modal-close-btn {
+    font-size: 2rem;
+    line-height: 1;
+}
+#add-alvo-btn {
+    font-size: 1.5rem;
+    line-height: 1;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+}
+.alvo-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    background-color: #f9fafb; /* gray-50 */
+    padding: 0.5rem;
+    border-radius: 0.375rem; /* rounded-md */
+}
+.alvo-item-incidencia {
+    width: 3rem;
+    text-align: center;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+}
+.alvo-item-btn {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    background-color: #e5e7eb; /* gray-200 */
+    font-weight: bold;
+}
+.alvo-item-delete-btn {
+    color: #ef4444; /* red-500 */
+}
