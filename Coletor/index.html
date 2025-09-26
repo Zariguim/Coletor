@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Campeiro</title>
+    
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1f2937">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex flex-col h-screen">
+
+    <div id="sync-status-bar" class="w-full text-white text-sm fixed top-0 z-[1003] transition-transform duration-300 -translate-y-full">
+        <p id="sync-status-text" class="p-2"></p>
+        <div id="sync-progress-bar-container" class="w-full bg-white bg-opacity-30 h-1 hidden">
+            <div id="sync-progress-bar" class="bg-white h-full" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <main id="map-container" class="flex-grow relative">
+        <div id="map"></div>
+        
+        <div id="controls-container" class="absolute top-0 left-0 right-0 p-4 z-[1000] pointer-events-none">
+            <div class="max-w-md mx-auto">
+                <div class="flex items-center gap-2 pointer-events-auto">
+                    <select id="fazendaSelect" class="flex-grow h-10 p-2 border border-gray-300 rounded-md shadow-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="" selected>Fazenda</option>
+                    </select>
+                    <button id="locate-btn" class="flex-shrink-0 bg-white w-10 h-10 rounded-md flex items-center justify-center shadow-lg text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <div id="demarcacao-controls" class="hidden bg-white bg-opacity-80 p-2 rounded-lg shadow-lg flex items-center gap-3 pointer-events-auto">
+                        <span class="text-sm font-semibold text-gray-700">Área:</span>
+                        <span id="demarcacao-area" class="text-md font-bold text-gray-900">0.0000 ha</span>
+                        <button id="demarcacao-finalize-btn" class="bg-red-500 text-white text-xs font-bold py-1 px-2 rounded">FINALIZAR</button>
+                    </div>
+                     <div id="manual-draw-controls" class="hidden bg-white bg-opacity-80 p-2 rounded-lg shadow-lg flex items-center gap-2 pointer-events-auto">
+                        <button id="manual-draw-delete-btn" class="bg-yellow-500 text-white text-xs font-bold py-1 px-2 rounded">DESFAZER</button>
+                        <button id="manual-draw-cancel-btn" class="bg-red-500 text-white text-xs font-bold py-1 px-2 rounded">CANCELAR</button>
+                    </div>
+                    
+                    <div class="flex-grow"></div>
+                    <button id="download-csv-btn" class="hidden bg-green-600 text-white py-2 px-3 rounded-md shadow-lg text-sm font-semibold h-10 pointer-events-auto">
+                        Finalizar monitoria
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="demarcacao-ab-controls" class="hidden absolute top-20 right-4 z-[1000] pointer-events-auto">
+            <div class="bg-white bg-opacity-90 p-3 rounded-lg shadow-lg flex flex-col items-end gap-3">
+                <button id="demarcacao-ab-ponto-a-btn" class="ab-button bg-blue-500 hover:bg-blue-600">Marcar Ponto A</button>
+                <button id="demarcacao-ab-ponto-b-btn" class="ab-button bg-blue-500 hover:bg-blue-600" disabled>Marcar Ponto B</button>
+                <button id="demarcacao-ab-finalize-btn" class="hidden ab-button bg-green-600 hover:bg-green-700">Finalizar</button>
+            </div>
+        </div>
+
+        <div id="fab-container" class="hidden absolute right-4 z-[1000] flex flex-col items-end gap-3">
+            <div id="fab-options" class="flex flex-col items-end gap-3">
+                <button id="afericao-btn" class="fab-option">Aferições</button>
+                <button id="demarcacao-btn" class="fab-option">Demarcação</button>
+                <button id="recomendacao-btn" class="fab-option">Recomendações</button>
+                <button id="anotacao-btn" class="fab-option">Anotações</button>
+                <button id="alvo-btn" class="fab-option">Alvo</button>
+            </div>
+            <button id="main-fab-btn" class="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+        </div>
+    </main>
+    
+    <div id="status-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 flex flex-col items-center justify-center z-[1002] transition-opacity duration-300">
+        <div id="spinner" class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-white mb-4"></div>
+        <p id="status-text" class="text-white font-medium text-center px-4"></p>
+    </div>
+    
+    <div id="info-modal" class="fixed bottom-0 left-0 right-0 bg-white p-0 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[1001] flex flex-col">
+        <div id="modal-header-clickable" class="max-w-4xl mx-auto flex justify-between items-center w-full px-4 py-3 cursor-pointer flex-shrink-0">
+            <div>
+                <h3 id="talhao-nome" class="font-bold text-lg text-gray-800">Nome do Talhão</h3>
+                <p id="talhao-hectares" class="text-md text-gray-600">0 ha</p>
+            </div>
+            <div id="modal-toggle-icon" class="text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+            </div>
+        </div>
+        <div class="max-w-4xl mx-auto w-full px-4 pt-2 pb-2 flex-shrink-0 flex flex-col gap-2">
+             <button id="open-relatorio-modal-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-3 rounded-lg text-sm hover:bg-blue-700">Gerar Relatório</button>
+             <select id="history-filter" class="w-full p-2 border border-gray-300 rounded-md text-sm bg-white">
+                <option value="all" selected>Todos os registros</option>
+                <option value="monitoring">Monitoramentos</option>
+                <option value="annotation">Anotações</option>
+                <option value="demarcation">Demarcações</option>
+                <option value="recomendacao">Recomendações</option>
+                <option value="Relatório">Relatórios</option>
+                <option value="population">População</option>
+                <option value="planting_assessment">Aferição de plantio</option>
+                <option value="harvest_loss">Perca na colheita</option>
+                <option value="productivity_estimation">Estimativa de produtividade</option>
+            </select>
+        </div>
+        <div id="monitoring-history" class="overflow-y-auto p-4 pt-2"></div>
+    </div>
+    
+    <div id="alvo-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-end sm:items-center">
+        <div class="bg-white w-full max-w-lg max-h-[80vh] flex flex-col rounded-t-lg sm:rounded-lg">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-xl font-bold">Lançar Alvos</h2>
+                <button id="alvo-modal-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="p-4 flex-grow overflow-y-auto">
+                <div class="flex items-center gap-2 mb-4">
+                    <input type="text" id="alvo-input" placeholder="Digite o alvo..." class="flex-grow p-2 border rounded-md">
+                    <button id="add-alvo-btn" class="bg-blue-600 text-white p-2 rounded-md">+</button>
+                </div>
+                <div id="alvo-list" class="space-y-2"></div>
+            </div>
+            <div class="p-4 border-t">
+                <button id="save-alvos-btn" class="w-full bg-green-600 text-white p-2 rounded-md">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="anotacao-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-end sm:items-center">
+        <div class="bg-white w-full max-w-lg max-h-[80vh] flex flex-col rounded-t-lg sm:rounded-lg">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-xl font-bold">Nova Anotação</h2>
+                <button id="anotacao-modal-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="p-4 flex-grow overflow-y-auto">
+                <div class="flex items-start gap-4">
+                    <textarea id="anotacao-text" class="flex-grow h-28 p-2 border rounded-md" placeholder="Escreva sua anotação aqui..."></textarea>
+                    <div class="flex flex-col items-center">
+                        <label for="anotacao-foto-input" class="camera-icon-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/></svg>
+                        </label>
+                        <input type="file" id="anotacao-foto-input" accept="image/*" class="hidden"/>
+                    </div>
+                </div>
+                <div id="anotacao-foto-preview-container" class="mt-2 hidden">
+                    <img id="anotacao-foto-preview" src="#" alt="Pré-visualização da foto" class="max-h-40 rounded-md"/>
+                    <button id="remove-foto-btn" class="mt-1 text-xs text-red-600 hover:text-red-800">Remover foto</button>
+                </div>
+            </div>
+            <div class="p-4 border-t">
+                <button id="save-anotacao-btn" class="w-full bg-green-600 text-white p-2 rounded-md">Salvar Anotação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="demarcacao-choice-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-center">
+        <div class="bg-white w-full max-w-sm p-6 rounded-lg text-center relative">
+            <button id="demarcacao-choice-close-btn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Nova Demarcação</h2>
+            <p class="text-gray-600 mb-6">Como você deseja demarcar a área?</p>
+            <div class="flex flex-col gap-3">
+                <button id="demarcacao-auto-btn" class="w-full bg-blue-600 text-white p-3 rounded-md font-semibold">Automática (GPS)</button>
+                <button id="demarcacao-manual-btn" class="w-full bg-gray-200 text-gray-800 p-3 rounded-md font-semibold">Manual (Desenhar no mapa)</button>
+                <button id="demarcacao-ab-btn" class="w-full bg-indigo-600 text-white p-3 rounded-md font-semibold">Demarcação A B</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="afericao-choice-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-center">
+        <div class="bg-white w-full max-w-sm p-6 rounded-lg text-center relative">
+            <button id="afericao-choice-close-btn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Aferições</h2>
+            <p class="text-gray-600 mb-6">Selecione o tipo de aferição:</p>
+            <div class="flex flex-col gap-3">
+                <button id="stand-plantas-btn" class="w-full bg-green-600 text-white p-3 rounded-md font-semibold">Stand de Plantas</button>
+                <button id="afericao-plantio-btn" class="w-full bg-blue-600 text-white p-3 rounded-md font-semibold">Aferição de Plantio</button>
+                <button id="perca-colheita-btn" class="w-full bg-yellow-500 text-white p-3 rounded-md font-semibold">Perca na Colheita</button>
+                <button id="estimativa-produtividade-btn" class="w-full bg-purple-600 text-white p-3 rounded-md font-semibold">Estimativa de Produtividade</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stand-plantas-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-end sm:items-center">
+        <div class="bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-t-lg sm:rounded-lg">
+            <div class="flex justify-between items-center p-4 border-b flex-shrink-0">
+                <h2 class="text-xl font-bold">Stand de Plantas (População)</h2>
+                <button id="stand-plantas-close-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div class="p-4 flex-grow overflow-y-auto">
+                <div class="bg-gray-50 p-3 rounded-lg border mb-4">
+                    <h3 class="font-semibold mb-2 text-gray-800">Configuração da Amostra</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="espacamento-input" class="block text-sm font-medium text-gray-700">Espaçamento (m)</label>
+                            <input type="number" id="espacamento-input" placeholder="Ex: 0.5" class="w-full p-2 border rounded-md mt-1">
+                        </div>
+                        <div>
+                            <label for="metros-avaliados-input" class="block text-sm font-medium text-gray-700">Metros avaliados</label>
+                            <input type="number" id="metros-avaliados-input" placeholder="Ex: 10" class="w-full p-2 border rounded-md mt-1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="plantas-encontradas-input" class="block text-sm font-medium text-gray-700">Nº de Plantas na amostra</label>
+                    <div class="flex items-center gap-2 mt-1">
+                        <input type="number" id="plantas-encontradas-input" placeholder="Ex: 30" class="w-full p-2 border rounded-md">
+                        <button id="add-medicao-btn" class="bg-blue-600 text-white p-2 rounded-md whitespace-nowrap">Adicionar</button>
+                    </div>
+                </div>
+                
+                <h3 class="font-semibold text-lg mt-6 mb-2">Medições Realizadas</h3>
+                <div id="medicoes-list" class="space-y-2 mb-4">
+                    <p class="text-center text-gray-500">Nenhuma medição adicionada.</p>
+                </div>
+                
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mt-4">
+                    <p class="font-bold">Média de População</p>
+                    <p class="text-2xl"><span id="media-plantas-result">0</span> plantas/ha</p>
+                </div>
+            </div>
+            <div class="p-4 border-t flex-shrink-0">
+                <button id="save-stand-btn" class="w-full bg-green-600 text-white p-2 rounded-md" disabled>Salvar Aferição</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="afericao-plantio-modal-container"></div>
+    <div id="perca-colheita-modal-container"></div>
+    <div id="estimativa-produtividade-modal-container"></div>
+    <div id="recomendacao-modal-container"></div>
+    <div id="relatorio-modal-container"></div>
+
+
+    <div id="demarcacao-description-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[1004] flex justify-center items-center">
+        <div class="bg-white w-full max-w-lg rounded-lg">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-xl font-bold">Salvar Demarcação</h2>
+                <button id="demarcacao-description-close-btn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div class="p-4">
+                <label for="demarcacao-description-input" class="block text-sm font-medium text-gray-700 mb-2">Descrição da área demarcada:</label>
+                <input type="text" id="demarcacao-description-input" class="w-full p-2 border rounded-md" placeholder="Ex: Área de aplicação, Mancha de praga, etc.">
+            </div>
+            <div class="p-4 border-t">
+                <button id="save-demarcacao-btn" class="w-full bg-green-600 text-white p-2 rounded-md">Salvar Demarcação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="fullscreen-viewer" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[2000] flex items-center justify-center p-4">
+        <button id="fullscreen-close-btn" class="absolute top-4 right-4 text-white text-4xl">&times;</button>
+        <img id="fullscreen-image" src="" class="max-w-full max-h-full object-contain"/>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <script src="js/config.js"></script>
+    <script src="js/local-db.js"></script>
+    <script src="js/alvo-modal.js"></script>
+    <script src="js/anotacao-modal.js"></script>
+    <script src="js/demarcacao-modal.js"></script>
+    <script src="js/afericao-modal.js"></script>
+    <script src="js/cv-modal.js"></script>
+    <script src="js/perca-colheita-modal.js"></script>
+    <script src="js/estimativa-produtividade-modal.js"></script>
+    <script src="js/recomendacao-modal.js"></script>
+    <script src="js/relatorio-modal.js"></script>
+    <script src="js/ui-share.js"></script>
+    <script src="js/ui-cards.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
